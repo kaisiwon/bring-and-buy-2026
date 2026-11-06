@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bring & Buy — Item Pre-Order</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-alt: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --danger-light: #fef2f2;
+      --success: #16a34a;
+      --success-light: #f0fdf4;
+      --warning: #d97706;
+      --radius: 12px;
+      --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .admin-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .admin-badge.active {
+      display: inline-flex;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 960px;
+      margin: 28px auto;
+      padding: 0 20px;
+    }
+
+    .preorder-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 768px) {
+      .preorder-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    /* Item List */
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+
+    .item-row.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .item-info {
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .item-price {
+      font-size: 0.9rem;
+      color: var(--primary);
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* Quantity Controls */
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qty-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .qty-btn:hover {
+      background: var(--surface-alt);
+      border-color: #cbd5e1;
+    }
+
+    .qty-btn:active {
+      transform: scale(0.96);
+    }
+
+    .qty-input {
+      width: 60px !important;
+      text-align: center;
+      font-weight: 600;
+      padding: 6px 8px !important;
+      -moz-appearance: textfield;
+    }
+
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Order Summary */
+    .summary-card {
+      position: sticky;
+      top: 96px;
+    }
+
+    .summary-customer {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .summary-customer strong {
+      color: var(--text);
+    }
+
+    .summary-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    .summary-line-name {
+      color: var(--text);
+    }
+
+    .summary-line-qty {
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-left: 4px;
+    }
+
+    .summary-line-subtotal {
+      font-weight: 600;
+    }
+
+    .summary-empty {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 14px;
+      border-top: 2px solid var(--border);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .summary-total-amount {
+      color: var(--primary);
+      font-size: 1.3rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.99);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--surface-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .btn-danger {
+      background: var(--danger-light);
+      color: var(--danger);
+      border: 1px solid #fecaca;
+    }
+
+    .btn-danger:hover {
+      background: #fee2e2;
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 0.85rem;
+    }
+
+    /* Admin Panel */
+    #adminSection {
+      display: none;
+    }
+
+    #adminSection.active {
+      display: block;
+    }
+
+    .admin-header-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+
+    .admin-header-bar h2 {
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-add-form {
+      display: grid;
+      grid-template-columns: 1fr 160px auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    @media (max-width: 640px) {
+      .admin-add-form {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .admin-table th,
+    .admin-table td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .admin-table th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    /* Modal (Password Prompt) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      max-width: 400px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+    }
+
+    .modal h3 {
+      font-size: 1.15rem;
+      margin-bottom: 6px;
+    }
+
+    .modal p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: none;
+      font-weight: 500;
+    }
+
+    .error-msg.visible {
+      display: block;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 300;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Recent Orders Table */
+    .orders-empty {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 12px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <h1>🛍️ Pre-Order Items</h1>
+        <p>Write your name and select the quantity for each item you wish to pre-order.</p>
+      </div>
+      <div id="adminBadge" class="admin-badge">
+        <span>🔓 Admin Mode Active</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="exitAdminTopBtn">Exit Admin</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ADMIN SECTION -->
+    <section id="adminSection">
+      <div class="admin-header-bar">
+        <h2>⚙️ Admin Dashboard — Manage Items &amp; Prices</h2>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="changePwdBtn">Change Password</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="exitAdminBtn">Back to Pre-Order View</button>
+        </div>
+      </div>
+
+      <!-- Add New Item Card -->
+      <div class="card">
+        <div class="card-title">Add New Item</div>
+        <form id="addItemForm" class="admin-add-form">
+          <div class="form-group">
+            <label for="newItemName">Item Name</label>
+            <input type="text" id="newItemName" placeholder="e.g., Sausage Roll" required />
+          </div>
+          <div class="form-group">
+            <label for="newItemPrice">Price ($)</label>
+            <input type="number" id="newItemPrice" placeholder="0.00" step="0.01" min="0" required />
+          </div>
+          <button type="submit" class="btn btn-primary" style="height: 41px;">+ Add Item</button>
+        </form>
+      </div>
+
+      <!-- Edit / Delete Existing Items Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>Edit or Delete Items</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Changes save immediately when you click Save</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th style="width: 160px;">Price ($)</th>
+                <th style="width: 170px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminItemsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Submitted Pre-Orders Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>Submitted Pre-Orders</span>
+          <button type="button" class="btn btn-danger btn-sm" id="clearOrdersBtn">Clear All Orders</button>
+        </div>
+        <div id="adminOrdersContainer"></div>
+      </div>
+    </section>
+
+    <!-- CUSTOMER PRE-ORDER SECTION -->
+    <section id="customerSection">
+      <form id="preorderForm" class="preorder-grid">
+        <div>
+          <!-- Step 1: Write Your Name -->
+          <div class="card">
+            <div class="card-title">1. Customer Information</div>
+            <div class="form-group">
+              <label for="customerName">Write Your Name <span style="color: var(--danger);">*</span></label>
+              <input
+                type="text"
+                id="customerName"
+                placeholder="Write your full name here..."
+                autocomplete="name"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Step 2: Items & Qty of Ordering -->
+          <div class="card">
+            <div class="card-title">
+              <span>2. Select Items &amp; Quantity of Ordering</span>
+              <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Qty</span>
+            </div>
+            <div id="customerItemsList" class="items-list"></div>
+          </div>
+        </div>
+
+        <!-- Order Summary Sidebar -->
+        <div class="card summary-card">
+          <div class="card-title">Pre-Order Summary</div>
+          <div class="summary-customer">
+            Name: <strong id="summaryCustomerName">—</strong>
+          </div>
+          <div id="summaryLines" class="summary-lines">
+            <div class="summary-empty">No items selected yet. Increase the qty of any item to add it.</div>
+          </div>
+          <div class="summary-total">
+            <span>Total</span>
+            <span id="summaryTotalAmount" class="summary-total-amount">$0.00</span>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Pre-Order</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Password Modal -->
+  <div id="passwordModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h3 id="modalTitle">🔒 Admin Authentication</h3>
+      <p>Enter the admin password to edit, add, or delete items and their prices.</p>
+      <form id="passwordForm">
+        <div class="form-group">
+          <label for="adminPasswordInput">Password</label>
+          <input type="password" id="adminPasswordInput" placeholder="Enter admin password" required />
+          <div id="passwordError" class="error-msg">Incorrect password. Please try again.</div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="width: auto;">Unlock Admin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // --- Storage Keys & Default Data ---
+    const STORAGE_ITEMS_KEY = 'bringbuy_preorder_items_v1';
+    const STORAGE_ORDERS_KEY = 'bringbuy_preorder_orders_v1';
+    const STORAGE_PASSWORD_KEY = 'bringbuy_admin_password_v1';
+    const DEFAULT_PASSWORD = 'funwi4-cugJot-sedput';
+
+    const DEFAULT_ITEMS = [
+      { id: 'item-1', name: 'Classic Beef Burger', price: 8.50 },
+      { id: 'item-2', name: 'Cheese Pizza Slice', price: 3.75 },
+      { id: 'item-3', name: 'Caesar Salad Bowl', price: 5.25 },
+      { id: 'item-4', name: 'Grilled Chicken Sandwich', price: 7.00 },
+      { id: 'item-5', name: 'Chocolate Milkshake', price: 4.50 }
+    ];
+
+    // --- State ---
+    let items = loadItems();
+    let orders = loadOrders();
+    let quantities = {}; // { [itemId]: number }
+    let isAdminMode = false;
+
+    function loadItems() {
+      try {
+        const raw = localStorage.getItem(STORAGE_ITEMS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to load items:', e);
+      }
+      return [...DEFAULT_ITEMS];
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_ITEMS_KEY, JSON.stringify(items));
+    }
+
+    function loadOrders() {
+      try {
+        const raw = localStorage.getItem(STORAGE_ORDERS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to load orders:', e);
+      }
+      return [];
+    }
+
+    function saveOrders() {
+      localStorage.setItem(STORAGE_ORDERS_KEY, JSON.stringify(orders));
+    }
+
+    function getAdminPassword() {
+      return localStorage.getItem(STORAGE_PASSWORD_KEY) || DEFAULT_PASSWORD;
+    }
+
+    function formatCurrency(value) {
+      return '$' + Number(value || 0).toFixed(2);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // --- Customer Pre-Order Rendering ---
+    const customerNameInput = document.getElementById('customerName');
+    const summaryCustomerName = document.getElementById('summaryCustomerName');
+    const customerItemsList = document.getElementById('customerItemsList');
+    const summaryLines = document.getElementById('summaryLines');
+    const summaryTotalAmount = document.getElementById('summaryTotalAmount');
+
+    customerNameInput.addEventListener('input', () => {
+      const val = customerNameInput.value.trim();
+      summaryCustomerName.textContent = val || '—';
+    });
+
+    function renderCustomerItems() {
+      if (items.length === 0) {
+        customerItemsList.innerHTML = `<div class="summary-empty">No items available right now.</div>`;
+        updateOrderSummary();
+        return;
+      }
+
+      customerItemsList.innerHTML = items.map(item => {
+        const qty = quantities[item.id] || 0;
+        return `
+          <div class="item-row ${qty > 0 ? 'selected' : ''}" data-item-row="${item.id}">
+            <div class="item-info">
+              <div class="item-name">${escapeHtml(item.name)}</div>
+              <div class="item-price">${formatCurrency(item.price)} each</div>
+            </div>
+            <div class="qty-control">
+              <button type="button" class="qty-btn" data-action="dec" data-id="${item.id}" aria-label="Decrease quantity">−</button>
+              <input
+                type="number"
+                class="qty-input"
+                min="0"
+                max="999"
+                value="${qty}"
+                data-qty-input="${item.id}"
+                aria-label="Quantity for ${escapeHtml(item.name)}"
+              />
+              <button type="button" class="qty-btn" data-action="inc" data-id="${item.id}" aria-label="Increase quantity">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      updateOrderSummary();
+    }
+
+    customerItemsList.addEventListener('click', (e) => {
+      const btn = e.target.closest('.qty-btn');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      const current = quantities[id] || 0;
+      const next = action === 'inc' ? current + 1 : Math.max(0, current - 1);
+      setItemQuantity(id, next);
+    });
+
+    customerItemsList.addEventListener('input', (e) => {
+      const input = e.target.closest('[data-qty-input]');
+      if (!input) return;
+      const id = input.getAttribute('data-qty-input');
+      const parsed = Math.max(0, parseInt(input.value, 10) || 0);
+      quantities[id] = parsed;
+      const row = customerItemsList.querySelector(`[data-item-row="${id}"]`);
+      if (row) row.classList.toggle('selected', parsed > 0);
+      updateOrderSummary();
+    });
+
+    function setItemQuantity(id, qty) {
+      quantities[id] = Math.max(0, qty);
+      const input = customerItemsList.querySelector(`[data-qty-input="${id}"]`);
+      if (input) input.value = quantities[id];
+      const row = customerItemsList.querySelector(`[data-item-row="${id}"]`);
+      if (row) row.classList.toggle('selected', quantities[id] > 0);
+      updateOrderSummary();
+    }
+
+    function updateOrderSummary() {
+      const selected = items.filter(item => (quantities[item.id] || 0) > 0);
+      if (selected.length === 0) {
+        summaryLines.innerHTML = `<div class="summary-empty">No items selected yet. Increase the qty of any item to add it.</div>`;
+        summaryTotalAmount.textContent = '$0.00';
+        return;
+      }
+
+      let total = 0;
+      summaryLines.innerHTML = selected.map(item => {
+        const qty = quantities[item.id] || 0;
+        const subtotal = qty * item.price;
+        total += subtotal;
+        return `
+          <div class="summary-line">
+            <div>
+              <span class="summary-line-name">${escapeHtml(item.name)}</span>
+              <span class="summary-line-qty">× ${qty}</span>
+            </div>
+            <span class="summary-line-subtotal">${formatCurrency(subtotal)}</span>
+          </div>
+        `;
+      }).join('');
+
+      summaryTotalAmount.textContent = formatCurrency(total);
+    }
+
+    // Handle Pre-Order Form Submit
+    document.getElementById('preorderForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const customerName = customerNameInput.value.trim();
+      if (!customerName) {
+        showToast('Please write your name before placing a pre-order.');
+        customerNameInput.focus();
+        return;
+      }
+
+      const orderedItems = items
+        .filter(item => (quantities[item.id] || 0) > 0)
+        .map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          qty: quantities[item.id],
+          subtotal: quantities[item.id] * item.price
+        }));
+
+      if (orderedItems.length === 0) {
+        showToast('Please select a quantity (at least 1) for at least one item.');
+        return;
+      }
+
+      const total = orderedItems.reduce((sum, i) => sum + i.subtotal, 0);
+      const newOrder = {
+        orderId: 'ord-' + Date.now(),
+        customerName,
+        items: orderedItems,
+        total,
+        createdAt: new Date().toLocaleString()
+      };
+
+      orders.unshift(newOrder);
+      saveOrders();
+
+      // Reset customer form
+      customerNameInput.value = '';
+      summaryCustomerName.textContent = '—';
+      quantities = {};
+      renderCustomerItems();
+      renderAdminOrders();
+
+      showToast(`Thank you, ${customerName}! Your pre-order (${formatCurrency(total)}) has been recorded.`);
+    });
+
+    // --- Admin Mode Rendering & Logic ---
+    const adminItemsTbody = document.getElementById('adminItemsTbody');
+    const adminOrdersContainer = document.getElementById('adminOrdersContainer');
+
+    function renderAdminItems() {
+      if (items.length === 0) {
+        adminItemsTbody.innerHTML = `
+          <tr>
+            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">
+              No items yet. Use the form above to add your first item.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      adminItemsTbody.innerHTML = items.map(item => `
+        <tr data-admin-row="${item.id}">
+          <td>
+            <input
+              type="text"
+              value="${escapeHtml(item.name)}"
+              data-edit-name="${item.id}"
+              aria-label="Edit item name"
+            />
+          </td>
+          <td>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value="${Number(item.price).toFixed(2)}"
+              data-edit-price="${item.id}"
+              aria-label="Edit item price"
+            />
+          </td>
+          <td>
+            <div class="admin-actions">
+              <button type="button" class="btn btn-secondary btn-sm" data-admin-action="save" data-id="${item.id}">Save</button>
+              <button type="button" class="btn btn-danger btn-sm" data-admin-action="delete" data-id="${item.id}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    adminItemsTbody.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-admin-action]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-admin-action');
+      const id = btn.getAttribute('data-id');
+
+      if (action === 'save') {
+        const nameInput = adminItemsTbody.querySelector(`[data-edit-name="${id}"]`);
+        const priceInput = adminItemsTbody.querySelector(`[data-edit-price="${id}"]`);
+        const newName = nameInput.value.trim();
+        const newPrice = parseFloat(priceInput.value);
+
+        if (!newName) {
+          showToast('Item name cannot be empty.');
+          nameInput.focus();
+          return;
+        }
+        if (isNaN(newPrice) || newPrice < 0) {
+          showToast('Please enter a valid price.');
+          priceInput.focus();
+          return;
+        }
+
+        const item = items.find(i => i.id === id);
+        if (item) {
+          item.name = newName;
+          item.price = newPrice;
+          saveItems();
+          renderAdminItems();
+          renderCustomerItems();
+          showToast(`Updated "${newName}" (${formatCurrency(newPrice)})`);
+        }
+      } else if (action === 'delete') {
+        const item = items.find(i => i.id === id);
+        if (!item) return;
+        items = items.filter(i => i.id !== id);
+        delete quantities[id];
+        saveItems();
+        renderAdminItems();
+        renderCustomerItems();
+        showToast(`Deleted "${item.name}"`);
+      }
+    });
+
+    // Add New Item
+    document.getElementById('addItemForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('newItemName');
+      const priceInput = document.getElementById('newItemPrice');
+      const name = nameInput.value.trim();
+      const price = parseFloat(priceInput.value);
+
+      if (!name || isNaN(price) || price < 0) {
+        showToast('Please provide a valid item name and price.');
+        return;
+      }
+
+      const newItem = {
+        id: 'item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        name,
+        price
+      };
+
+      items.push(newItem);
+      saveItems();
+      nameInput.value = '';
+      priceInput.value = '';
+      renderAdminItems();
+      renderCustomerItems();
+      showToast(`Added "${name}" (${formatCurrency(price)})`);
+    });
+
+    function renderAdminOrders() {
+      if (orders.length === 0) {
+        adminOrdersContainer.innerHTML = `<div class="orders-empty">No pre-orders have been submitted yet.</div>`;
+        return;
+      }
+
+      adminOrdersContainer.innerHTML = `
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Ordered Items (Qty)</th>
+                <th>Total</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orders.map(o => `
+                <tr>
+                  <td style="font-weight: 600;">${escapeHtml(o.customerName)}</td>
+                  <td>${o.items.map(i => `${escapeHtml(i.name)} × <strong>${i.qty}</strong>`).join(', ')}</td>
+                  <td style="font-weight: 700; color: var(--primary);">${formatCurrency(o.total)}</td>
+                  <td style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(o.createdAt)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    document.getElementById('clearOrdersBtn').addEventListener('click', () => {
+      if (orders.length === 0) return;
+      if (confirm('Clear all submitted pre-orders?')) {
+        orders = [];
+        saveOrders();
+        renderAdminOrders();
+        showToast('All pre-orders cleared.');
+      }
+    });
+
+    function setAdminMode(active) {
+      isAdminMode = active;
+      document.getElementById('adminSection').classList.toggle('active', active);
+      document.getElementById('adminBadge').classList.toggle('active', active);
+      if (active) {
+        renderAdminItems();
+        renderAdminOrders();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    document.getElementById('exitAdminBtn').addEventListener('click', () => setAdminMode(false));
+    document.getElementById('exitAdminTopBtn').addEventListener('click', () => setAdminMode(false));
+
+    document.getElementById('changePwdBtn').addEventListener('click', () => {
+      const nextPwd = prompt('Enter new admin password:', getAdminPassword());
+      if (nextPwd && nextPwd.trim()) {
+        localStorage.setItem(STORAGE_PASSWORD_KEY, nextPwd.trim());
+        showToast('Admin password updated!');
+      }
+    });
+
+    // --- Hold "r" for 5 Seconds Logic ---
+    const HOLD_DURATION_MS = 5000;
+    let holdStartTime = null;
+    let holdIntervalId = null;
+    let holdTriggered = false;
+    let activeInputSnapshot = null;
+
+    const passwordModal = document.getElementById('passwordModal');
+    const adminPasswordInput = document.getElementById('adminPasswordInput');
+    const passwordError = document.getElementById('passwordError');
+
+    function isRKey(e) {
+      return (e.key && e.key.toLowerCase() === 'r') || e.code === 'KeyR';
+    }
+
+    function stopHoldTimer() {
+      holdStartTime = null;
+      holdTriggered = false;
+      activeInputSnapshot = null;
+      if (holdIntervalId) {
+        clearInterval(holdIntervalId);
+        holdIntervalId = null;
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (!isRKey(e)) return;
+      if (passwordModal.classList.contains('open')) return;
+
+      // Prevent key auto-repeat from typing "rrrrrr" once the user has held 'r' for more than 350ms
+      if (holdStartTime && (Date.now() - holdStartTime > 350)) {
+        e.preventDefault();
+      }
+
+      if (e.repeat) return; // Don't restart timer on key auto-repeat
+
+      // Save snapshot if user started holding 'r' inside an input so we can restore clean text
+      const el = document.activeElement;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+        activeInputSnapshot = { el, value: el.value };
+      } else {
+        activeInputSnapshot = null;
+      }
+
+      holdStartTime = Date.now();
+      holdTriggered = false;
+
+      if (holdIntervalId) clearInterval(holdIntervalId);
+      holdIntervalId = setInterval(() => {
+        if (!holdStartTime) return;
+        const elapsed = Date.now() - holdStartTime;
+
+        if (elapsed >= 350 && !holdTriggered) {
+          if (activeInputSnapshot && document.activeElement === activeInputSnapshot.el) {
+            activeInputSnapshot.el.value = activeInputSnapshot.value;
+            activeInputSnapshot.el.blur();
+            if (activeInputSnapshot.el === customerNameInput) {
+              summaryCustomerName.textContent = customerNameInput.value.trim() || '—';
+            }
+          }
+        }
+
+        if (elapsed >= HOLD_DURATION_MS && !holdTriggered) {
+          holdTriggered = true;
+          stopHoldTimer();
+          openPasswordModal();
+        }
+      }, 50);
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (isRKey(e)) {
+        stopHoldTimer();
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      stopHoldTimer();
+    });
+
+    // --- Password Modal Logic ---
+    function openPasswordModal() {
+      passwordError.classList.remove('visible');
+      adminPasswordInput.value = '';
+      passwordModal.classList.add('open');
+      setTimeout(() => adminPasswordInput.focus(), 50);
+    }
+
+    function closePasswordModal() {
+      passwordModal.classList.remove('open');
+      passwordError.classList.remove('visible');
+      adminPasswordInput.value = '';
+    }
+
+    document.getElementById('cancelModalBtn').addEventListener('click', closePasswordModal);
+
+    passwordModal.addEventListener('click', (e) => {
+      if (e.target === passwordModal) closePasswordModal();
+    });
+
+    document.getElementById('passwordForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const entered = adminPasswordInput.value;
+      if (entered === getAdminPassword()) {
+        closePasswordModal();
+        setAdminMode(true);
+        showToast('Admin Mode unlocked!');
+      } else {
+        passwordError.classList.add('visible');
+        adminPasswordInput.select();
+      }
+    });
+
+    // --- Initial Render ---
+    renderCustomerItems();
+    renderAdminItems();
+    renderAdminOrders();
+  </script>
+</body>
+</html>
+
